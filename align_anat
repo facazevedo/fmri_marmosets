@@ -1,0 +1,44 @@
+#!/bin/bash
+
+anat_orig="$PWD"/anat/anat_raw.deo.ryf.rf.rs.cropped.nii.gz
+anat_orig_ab=anat_aligned
+	
+ref_base="$PWD"/template_T1w.nii.gz
+ref_base_ab=MBV3
+
+ref_atl=""$PWD"/atlas_MBM_cortex_vM.nii.gz "$PWD"/atlas_MBM_subcortical_beta.nii.gz"
+ref_atl_ab="MBV3M_cort MBV3M_subcort"
+
+ref_mask="$PWD"/mask_brain.nii.gz
+
+dir_results=./anat/anat_aligned
+
+#################################### Main #######################################################
+
+# check available N_threads and report what is being used
+# + consider using up to 16 threads (alignment programs are parallelized)
+# + N_threads may be set elsewhere; to set here, uncomment the following line:
+nthr_avail=$(afni_system_check.py -disp_num_cpu)
+nthr_using=$(afni_check_omp)
+
+echo "++ INFO: Using ${nthr_using} of available ${nthr_avail} threads"
+
+# --------------------------------------------------------------------------
+# Animal warper
+# --------------------------------------------------------------------------
+@animal_warper \
+    -echo \
+    -input ${anat_orig} \
+    -input_abbrev ${anat_orig_ab} \
+    -base ${ref_base} \
+    -align_centers_meth cm \
+    -cost lpa+ZZ \
+    -base_abbrev ${ref_base_ab} \
+    -atlas_followers ${ref_atl} \
+    -atlas_abbrevs ${ref_atl_ab} \
+    -skullstrip ${ref_mask} \
+    -outdir ${dir_results} \
+    -no_surfaces \
+    -keep_temp
+
+echo "++ FINISHED ANIMAL WARPER"

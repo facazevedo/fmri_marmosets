@@ -1,0 +1,36 @@
+#!/bin/bash
+
+fullpath_file="$PWD"/14_MEAN_S12_S13_1.nii
+dir_anat=./anat
+
+#################################### Main #######################################################
+mkdir -p "${dir_anat}"
+
+cd "${dir_anat}"
+
+#--------------------------------Deoblique -----------------------------------------------------
+# https://sscc.nimh.nih.gov/sscc/dglen/Obliquity
+temp_prefix=anat_raw.deo
+
+3dWarp -oblique2card -prefix "${temp_prefix}".nii.gz "${fullpath_file}"
+
+#--------------------------------Flip Sphinx position -------------------------------------------       
+temp_input="${temp_prefix}"
+temp_prefix="${temp_prefix}".ryf
+
+3dLRflip -Y -prefix "${temp_prefix}".nii.gz "${temp_input}".nii.gz
+
+#--------------------------------Re-orient position---------------------------------------------
+temp_input="${temp_prefix}"
+temp_prefix="${temp_prefix}".rf
+
+3dcopy "${temp_input}".nii.gz "${temp_prefix}".nii.gz
+
+# Maybe the cmd below belongs to Flip Sphinx position. Double check it
+3drefit -orient LIP "${temp_prefix}".nii.gz
+
+#--------------------------------Resample---------------------------------------------
+temp_input="${temp_prefix}"
+temp_prefix="${temp_prefix}".rs
+
+3dresample -orient LPI -prefix "${temp_prefix}".nii.gz -input "${temp_input}".nii.gz
